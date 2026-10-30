@@ -1,23 +1,20 @@
+
 package org.example.inventorymanagementsystem.config;
 
+import org.example.inventorymanagementsystem.filter.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
-
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.core.userdetails.UserDetailsService;
-
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.example.inventorymanagementsystem.filter.JwtAuthenticationFilter;
-
-import org.springframework.http.HttpMethod;
 
 @Configuration
 public class SecurityConfig {
@@ -37,27 +34,43 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authenticationProvider(authenticationProvider)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/register", "/auth/login").permitAll()
 
-                        .requestMatchers(HttpMethod.POST, "/product").hasAnyRole("ADMIN", "MANAGER")
-                        .requestMatchers(HttpMethod.PUT, "/product/**").hasAnyRole("ADMIN", "MANAGER")
-                        .requestMatchers(HttpMethod.DELETE, "/product/**").hasRole("ADMIN")
+                        // Public endpoints
+                        .requestMatchers(
+                                "/",
+                                "/auth/register",
+                                "/auth/login"
+                        ).permitAll()
 
+                        // Product write operations
+                        .requestMatchers(HttpMethod.POST, "/product")
+                        .hasAnyRole("ADMIN", "MANAGER")
+
+                        .requestMatchers(HttpMethod.PUT, "/product/**")
+                        .hasAnyRole("ADMIN", "MANAGER")
+
+                        .requestMatchers(HttpMethod.DELETE, "/product/**")
+                        .hasRole("ADMIN")
+
+                        // Inventory operations
                         .requestMatchers(HttpMethod.POST, "/inventory/stock-in/**")
                         .hasAnyRole("ADMIN", "MANAGER")
 
                         .requestMatchers(HttpMethod.POST, "/inventory/stock-out/**")
                         .hasAnyRole("ADMIN", "MANAGER")
 
+                        // Product read operations
                         .requestMatchers(HttpMethod.GET, "/products", "/product/**")
                         .hasAnyRole("ADMIN", "MANAGER", "STAFF")
 
+                        // Purchase and sales operations
                         .requestMatchers(HttpMethod.POST, "/purchases")
                         .hasAnyRole("ADMIN", "MANAGER")
 
                         .requestMatchers(HttpMethod.POST, "/sales")
                         .hasAnyRole("ADMIN", "MANAGER")
 
+                        // All other endpoints require authentication
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(
@@ -87,7 +100,4 @@ public class SecurityConfig {
 
         return configuration.getAuthenticationManager();
     }
-
 }
-
-
