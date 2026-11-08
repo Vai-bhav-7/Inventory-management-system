@@ -1,4 +1,3 @@
-
 package org.example.inventorymanagementsystem.config;
 
 import org.example.inventorymanagementsystem.filter.JwtAuthenticationFilter;
